@@ -638,3 +638,152 @@ func TestCompose(t *testing.T) {
 		})
 	}
 }
+
+/*----- Part 5: Pointer Playground & Escape Analysis -----*/
+
+// TestSwapValues tests the SwapValues function
+func TestSwapValues(t *testing.T) {
+	tests := []struct {
+		name  string
+		a     int
+		b     int
+		wantA int
+		wantB int
+	}{
+		{
+			name:  "swap positive numbers",
+			a:     5,
+			b:     10,
+			wantA: 10,
+			wantB: 5,
+		},
+		{
+			name:  "swap negative numbers",
+			a:     -3,
+			b:     -7,
+			wantA: -7,
+			wantB: -3,
+		},
+		{
+			name:  "swap mixed numbers",
+			a:     15,
+			b:     -20,
+			wantA: -20,
+			wantB: 15,
+		},
+		{
+			name:  "swap with zero",
+			a:     0,
+			b:     100,
+			wantA: 100,
+			wantB: 0,
+		},
+		{
+			name:  "swap same values",
+			a:     42,
+			b:     42,
+			wantA: 42,
+			wantB: 42,
+		},
+		{
+			name:  "swap large numbers",
+			a:     999,
+			b:     -1000,
+			wantA: -1000,
+			wantB: 999,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotA, gotB := SwapValues(tt.a, tt.b)
+			if gotA != tt.wantA || gotB != tt.wantB {
+				t.Errorf("SwapValues(%d, %d) = (%d, %d), want (%d, %d)",
+					tt.a, tt.b, gotA, gotB, tt.wantA, tt.wantB)
+			}
+		})
+	}
+}
+
+// TestSwapPointers tests the SwapPointers function
+func TestSwapPointers(t *testing.T) {
+	tests := []struct {
+		name  string
+		a     int
+		b     int
+		wantA int
+		wantB int
+	}{
+		{
+			name:  "swap positive numbers",
+			a:     5,
+			b:     10,
+			wantA: 10,
+			wantB: 5,
+		},
+		{
+			name:  "swap negative numbers",
+			a:     -3,
+			b:     -7,
+			wantA: -7,
+			wantB: -3,
+		},
+		{
+			name:  "swap mixed numbers",
+			a:     15,
+			b:     -20,
+			wantA: -20,
+			wantB: 15,
+		},
+		{
+			name:  "swap with zero",
+			a:     0,
+			b:     100,
+			wantA: 100,
+			wantB: 0,
+		},
+		{
+			name:  "swap same values",
+			a:     42,
+			b:     42,
+			wantA: 42,
+			wantB: 42,
+		},
+		{
+			name:  "swap large numbers",
+			a:     999,
+			b:     -1000,
+			wantA: -1000,
+			wantB: 999,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create original variables
+			originalA := tt.a
+			originalB := tt.b
+
+			// Take their addresses
+			aPtr := &originalA
+			bPtr := &originalB
+
+			// Call SwapPointers
+			SwapPointers(aPtr, bPtr)
+
+			// Check that the original variables were modified
+			if originalA != tt.wantA || originalB != tt.wantB {
+				t.Errorf("SwapPointers(%d, %d) resulted in (%d, %d), want (%d, %d)",
+					tt.a, tt.b, originalA, originalB, tt.wantA, tt.wantB)
+			}
+
+			// Verify that pointers still point to the same memory locations
+			if aPtr != &originalA {
+				t.Errorf("aPtr changed memory location after SwapPointers")
+			}
+			if bPtr != &originalB {
+				t.Errorf("bPtr changed memory location after SwapPointers")
+			}
+		})
+	}
+}

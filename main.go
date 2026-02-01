@@ -173,6 +173,86 @@ func ExploreProcess() {
 	*/
 }
 
+/*----- Part 5: Pointer Playground & Escape Analysis -----*/
+
+// 1. DoubleValue takes an integer and doubles it
+func DoubleValue(x int) {
+	x = x * 2
+
+	/*
+		Question: Will this modify the original variable? Why or why not?
+
+		Answer: This function does not modify the original variable.
+
+		Reason: The Go programming language is pass-by-value so when we pass 'x', we are passing a COPY of the value,
+		not a reference to the original variable. Changes inside the function only affect the local copy.
+	*/
+}
+
+// 2. DoublePointer takes a pointer to an integer and doubles the value it points to
+func DoublePointer(x *int) {
+	*x = *x * 2
+
+	/*
+		Question: Will this modify the original variable? Why or why not?
+
+		Answer: This function does modify the original variable.
+
+		Reason: We are passing a pointer (memory address), not a copy of the value. The *x dereferences the pointer to access and modify the actual value at that memory address.
+	*/
+}
+
+// 3. CreateOnStack creates a local variable and returns its value
+func CreateOnStack() int {
+	x := 42
+
+	// This variable stays on the stack
+	return x
+}
+
+// 4. CreateOnHeap creates a local variable and returns a pointer to it
+func CreateOnHeap() *int {
+	x := 42
+
+	// This variable escapes to the heap
+	return &x
+}
+
+// 5. SwapValues swaps two values and returns them (does not use pointers)
+func SwapValues(a, b int) (int, int) {
+	return b, a
+}
+
+// 6. SwapPointers swaps the values that two pointers point to
+func SwapPointers(a, b *int) {
+	temp := *a
+	*a = *b
+	*b = temp
+}
+
+// AnalyzeEscape demonstrates escape analysis
+func AnalyzeEscape() {
+	// Call both functions to observe escape analysis
+	stackResult := CreateOnStack()
+	heapResult := CreateOnHeap()
+
+	_ = stackResult // Use the stack result
+	_ = heapResult  // Use the heap result
+
+	/*
+		Escape Analysis Explanation:
+
+		1. Which variables escaped to the heap?
+		   The variable 'x' in CreateOnHeap() escapes to the heap.
+
+		2. Why did they escape?
+			When CreateOnHeap() returns &x (a pointer to a local variable), Go's compiler determines that 'x' must outlive the function call.Since the caller needs access to 'x' after the function returns, it cannot remain on the stack (which would be cleaned up).Therefore, it's allocated on the heap instead.
+
+		3. What does "escapes to heap" mean?
+		   "Escape to heap" means a variable is allocated in heap memory instead of stack memory.
+	*/
+}
+
 func main() {
 	// Call the Part 4 function
 	ExploreProcess()
