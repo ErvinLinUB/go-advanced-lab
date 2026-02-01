@@ -57,3 +57,40 @@ func Power(base, exponent int) (int, error) {
 	}
 	return result, nil
 }
+
+/*----- Part 2: Function Factory & Closures -----*/
+
+// 1. MakeCounter - returns a closure that increments a counter
+func MakeCounter(start int) func() int {
+	count := start
+	return func() int {
+		count++
+		return count
+	}
+}
+
+// 2. MakeMultiplier - returns a closure that multiplies by captured factor
+func MakeMultiplier(factor int) func(int) int {
+	return func(x int) int {
+		return x * factor
+	}
+}
+
+// 3. MakeAccumulator - returns three closures sharing captured state
+func MakeAccumulator(initial int) (func(int), func(int), func() int) {
+	accumulator := initial
+
+	add := func(amount int) {
+		accumulator += amount
+	}
+
+	subtract := func(amount int) {
+		accumulator -= amount
+	}
+
+	get := func() int {
+		return accumulator
+	}
+
+	return add, subtract, get
+}
