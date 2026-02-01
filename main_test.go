@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 /*----- Part 1: Table-Driven Tests & Math Operations -----*/
 
@@ -786,4 +789,297 @@ func TestSwapPointers(t *testing.T) {
 			}
 		})
 	}
+}
+
+/*----- Bonus Challenges -----*/
+
+// TestMakeMemoizedFactorial tests the memoized factorial function
+func TestMakeMemoizedFactorial(t *testing.T) {
+	memoizedFactorial := MakeMemoizedFactorial()
+
+	// Test basic factorial calculations
+	tests := []struct {
+		name    string
+		input   int
+		want    int
+		wantErr bool
+	}{
+		{name: "factorial of 0", input: 0, want: 1, wantErr: false},
+		{name: "factorial of 1", input: 1, want: 1, wantErr: false},
+		{name: "factorial of 5", input: 5, want: 120, wantErr: false},
+		{name: "factorial of 7", input: 7, want: 5040, wantErr: false},
+		{name: "negative number", input: -3, want: 0, wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := memoizedFactorial(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("MakeMemoizedFactorial() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("MakeMemoizedFactorial() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+
+	// Test that cache is working by timing repeated calls
+	t.Run("cache effectiveness", func(t *testing.T) {
+		// First call should compute
+		result1, err1 := memoizedFactorial(10)
+		if err1 != nil {
+			t.Errorf("First call error: %v", err1)
+		}
+
+		// Second call should use cache
+		result2, err2 := memoizedFactorial(10)
+		if err2 != nil {
+			t.Errorf("Second call error: %v", err2)
+		}
+
+		if result1 != result2 {
+			t.Errorf("Cached results don't match: first=%v, second=%v", result1, result2)
+		}
+
+		// Test that different values are cached separately
+		result3, _ := memoizedFactorial(6)
+		result4, _ := memoizedFactorial(6)
+		if result3 != result4 {
+			t.Errorf("Different value cache failed: first=%v, second=%v", result3, result4)
+		}
+
+		// Verify 10! is still correct after caching
+		if result1 != 3628800 {
+			t.Errorf("Cached value incorrect: got %v, want 3628800", result1)
+		}
+	})
+
+	// Test with a fresh memoized function to ensure isolation
+	t.Run("fresh memoized function", func(t *testing.T) {
+		freshMemoized := MakeMemoizedFactorial()
+
+		// This should compute fresh (not use previous cache)
+		result, err := freshMemoized(5)
+		if err != nil {
+			t.Errorf("Fresh function error: %v", err)
+		}
+		if result != 120 {
+			t.Errorf("Fresh function result incorrect: got %v, want 120", result)
+		}
+	})
+}
+
+// TestPipeline tests the Pipeline function
+func TestPipeline(t *testing.T) {
+	// Define some operation functions
+	double := func(x int) int { return x * 2 }
+	addTen := func(x int) int { return x + 10 }
+	square := func(x int) int { return x * x }
+	negate := func(x int) int { return -x }
+
+	tests := []struct {
+		name       string
+		nums       []int
+		operations []func(int) int
+		want       []int
+	}{
+		{
+			name:       "double, addTen, square",
+			nums:       []int{1, 2, 3, 4},
+			operations: []func(int) int{double, addTen, square},
+			want:       []int{144, 196, 256, 324}, // ((1*2)+10)²=144, ((2*2)+10)²=196, etc.
+		},
+		{
+			name:       "addTen then square",
+			nums:       []int{1, 2, 3},
+			operations: []func(int) int{addTen, square},
+			want:       []int{121, 144, 169}, // (1+10)²=121, (2+10)²=144, (3+10)²=169
+		},
+		{
+			name:       "single operation",
+			nums:       []int{5, 10, 15},
+			operations: []func(int) int{double},
+			want:       []int{10, 20, 30},
+		},
+		{
+			name:       "no operations (identity)",
+			nums:       []int{1, 2, 3, 4, 5},
+			operations: []func(int) int{},
+			want:       []int{1, 2, 3, 4, 5},
+		},
+		{
+			name:       "negate then square",
+			nums:       []int{3, -3, 0},
+			operations: []func(int) int{negate, square},
+			want:       []int{9, 9, 0}, // (-3)²=9, (3)²=9, (0)²=0
+		},
+		{
+			name:       "empty slice",
+			nums:       []int{},
+			operations: []func(int) int{double, addTen},
+			want:       []int{},
+		},
+		{
+			name:       "multiple chained operations",
+			nums:       []int{1},
+			operations: []func(int) int{double, addTen, square, negate},
+			want:       []int{-144}, // ((1*2)+10)²=144, then negate = -144
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Pipeline(tt.nums, tt.operations...)
+
+			// Check length
+			if len(got) != len(tt.want) {
+				t.Errorf("Pipeline() length = %v, want %v", len(got), len(tt.want))
+				return
+			}
+
+			// Check each element
+			for i := range got {
+				if got[i] != tt.want[i] {
+					t.Errorf("Pipeline()[%d] = %v, want %v", i, got[i], tt.want[i])
+				}
+			}
+
+			// Verify original slice is not modified
+			if len(tt.nums) > 0 {
+				originalCopy := make([]int, len(tt.nums))
+				copy(originalCopy, tt.nums)
+				Pipeline(tt.nums, tt.operations...)
+				for i := range tt.nums {
+					if tt.nums[i] != originalCopy[i] {
+						t.Errorf("Pipeline() modified original slice at index %d", i)
+					}
+				}
+			}
+		})
+	}
+}
+
+// TestTryAll tests the Error Aggregator function
+func TestTryAll(t *testing.T) {
+	tests := []struct {
+		name       string
+		operations []func() error
+		wantErrors []string // nil means no errors expected
+	}{
+		{
+			name: "all operations succeed",
+			operations: []func() error{
+				func() error { return nil },
+				func() error { return nil },
+				func() error { return nil },
+			},
+			wantErrors: nil, // No errors expected
+		},
+		{
+			name: "some operations fail",
+			operations: []func() error{
+				func() error { return nil },
+				func() error { return errors.New("operation 2 failed") },
+				func() error { return nil },
+				func() error { return errors.New("operation 4 failed") },
+			},
+			wantErrors: []string{"operation 2 failed", "operation 4 failed"},
+		},
+		{
+			name: "all operations fail",
+			operations: []func() error{
+				func() error { return errors.New("first error") },
+				func() error { return errors.New("second error") },
+				func() error { return errors.New("third error") },
+			},
+			wantErrors: []string{"first error", "second error", "third error"},
+		},
+		{
+			name:       "no operations",
+			operations: []func() error{},
+			wantErrors: nil,
+		},
+		{
+			name: "mixed errors with different messages",
+			operations: []func() error{
+				func() error { return errors.New("error 1") },
+				func() error { return nil },
+				func() error { return errors.New("error 3") },
+				func() error { return errors.New("error 4") },
+				func() error { return nil },
+			},
+			wantErrors: []string{"error 1", "error 3", "error 4"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotErrors := TryAll(tt.operations)
+
+			// Check if we expect no errors
+			if tt.wantErrors == nil {
+				if gotErrors != nil {
+					t.Errorf("TryAll() returned errors when none expected: %v", gotErrors)
+				}
+				return
+			}
+
+			// Check error count
+			if len(gotErrors) != len(tt.wantErrors) {
+				t.Errorf("TryAll() returned %d errors, want %d", len(gotErrors), len(tt.wantErrors))
+				return
+			}
+
+			// Check each error message
+			for i, err := range gotErrors {
+				if err.Error() != tt.wantErrors[i] {
+					t.Errorf("TryAll() error[%d] = %v, want %v", i, err.Error(), tt.wantErrors[i])
+				}
+			}
+
+			// Verify all operations were executed
+			t.Run("all operations executed", func(t *testing.T) {
+				executionCount := 0
+				operationsWithCounter := []func() error{
+					func() error { executionCount++; return nil },
+					func() error { executionCount++; return errors.New("error") },
+					func() error { executionCount++; return nil },
+					func() error { executionCount++; return errors.New("another error") },
+				}
+
+				TryAll(operationsWithCounter)
+				if executionCount != 4 {
+					t.Errorf("Not all operations executed: %d out of 4", executionCount)
+				}
+			})
+		})
+	}
+
+	// Test that operations continue even after errors
+	t.Run("operations continue after errors", func(t *testing.T) {
+		executionOrder := []string{}
+		operations := []func() error{
+			func() error { executionOrder = append(executionOrder, "op1"); return nil },
+			func() error { executionOrder = append(executionOrder, "op2"); return errors.New("error") },
+			func() error { executionOrder = append(executionOrder, "op3"); return nil },
+			func() error { executionOrder = append(executionOrder, "op4"); return errors.New("error") },
+			func() error { executionOrder = append(executionOrder, "op5"); return nil },
+		}
+
+		TryAll(operations)
+
+		// All 5 operations should have executed
+		if len(executionOrder) != 5 {
+			t.Errorf("Not all operations executed after errors: %v", executionOrder)
+		}
+
+		// Check execution order
+		expectedOrder := []string{"op1", "op2", "op3", "op4", "op5"}
+		for i, op := range executionOrder {
+			if op != expectedOrder[i] {
+				t.Errorf("Execution order wrong at index %d: got %v, want %v", i, op, expectedOrder[i])
+			}
+		}
+	})
 }

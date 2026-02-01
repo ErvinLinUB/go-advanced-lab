@@ -254,6 +254,71 @@ func AnalyzeEscape() {
 	*/
 }
 
+/*----- Bonus Challenges -----*/
+
+// 1. Memoization: MakeMemoizedFactorial returns a memoized factorial function
+func MakeMemoizedFactorial() func(int) (int, error) {
+	// Cache to store previously computed factorials
+	cache := make(map[int]int)
+
+	return func(n int) (int, error) {
+		// Error handling for negative numbers
+		if n < 0 {
+			return 0, errors.New("factorial is not defined for negative numbers")
+		}
+
+		// Check if result is already in cache
+		if result, found := cache[n]; found {
+			return result, nil
+		}
+
+		// Compute factorial
+		result := 1
+		for i := 1; i <= n; i++ {
+			result *= i
+		}
+
+		// Store in cache for future use
+		cache[n] = result
+		return result, nil
+	}
+}
+
+// 2. Function Pipeline: applies operations in sequence
+func Pipeline(nums []int, operations ...func(int) int) []int {
+	result := make([]int, len(nums))
+
+	// Copy original values
+	copy(result, nums)
+
+	// Apply each operation in sequence
+	for _, op := range operations {
+		for i := range result {
+			result[i] = op(result[i])
+		}
+	}
+
+	return result
+}
+
+// 3. Error Aggregator: runs all operations and collects errors
+func TryAll(operations []func() error) []error {
+	var errors []error
+
+	for _, op := range operations {
+		if err := op(); err != nil {
+			errors = append(errors, err)
+		}
+	}
+
+	// Return nil if no errors occurred
+	if len(errors) == 0 {
+		return nil
+	}
+
+	return errors
+}
+
 func main() {
 	// Call the Part 4 function
 	println("=== Process Information ===")
