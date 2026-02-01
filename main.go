@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"os"
 )
@@ -255,5 +256,157 @@ func AnalyzeEscape() {
 
 func main() {
 	// Call the Part 4 function
+	println("=== Process Information ===")
 	ExploreProcess()
+
+	/*----- Part 6: Integration - Main Program -----*/
+
+	println("\n=== Math Operations ===")
+
+	// Factorial demo
+	facts := []int{0, 5, 10}
+	for _, n := range facts {
+		result, err := Factorial(n)
+		if err != nil {
+			println("Factorial(", n, ") error:", err.Error())
+		} else {
+			println("Factorial(", n, ") =", result)
+		}
+	}
+
+	// IsPrime demo
+	primes := []int{17, 20, 25}
+	for _, n := range primes {
+		result, err := IsPrime(n)
+		if err != nil {
+			println("IsPrime(", n, ") error:", err.Error())
+		} else {
+			println("IsPrime(", n, ") =", result)
+		}
+	}
+
+	// Power demo
+	powerTests := []struct {
+		base, exponent int
+	}{
+		{2, 8},
+		{5, 3},
+	}
+
+	for _, test := range powerTests {
+		result, err := Power(test.base, test.exponent)
+		if err != nil {
+			println("Power(", test.base, "^", test.exponent, ") error:", err.Error())
+		} else {
+			println("Power(", test.base, "^", test.exponent, ") =", result)
+		}
+	}
+
+	println("\n=== Closure Demonstration ===")
+
+	// Counter demo
+	counter1 := MakeCounter(0)
+	println("Counter1 starting at 0:")
+	println("Counter1:", counter1())
+	println("Counter1:", counter1())
+	println("Counter1:", counter1())
+
+	counter2 := MakeCounter(100)
+	println("\nCounter2 starting at 100:")
+	println("Counter2:", counter2())
+	println("Counter2:", counter2())
+
+	println("\nBack to Counter1 (showing independence):")
+	println("Counter1:", counter1())
+
+	// Multiplier demo
+	doubler := MakeMultiplier(2)
+	tripler := MakeMultiplier(3)
+	testNumber := 7
+
+	println("\nMultiplier functions on number", testNumber, ":")
+	println("Doubler:", testNumber, "->", doubler(testNumber))
+	println("Tripler:", testNumber, "->", tripler(testNumber))
+
+	// Accumulator demo
+	add, subtract, get := MakeAccumulator(50)
+	println("\nAccumulator starting at 50:")
+	add(25)
+	println("After adding 25:", get())
+	subtract(15)
+	println("After subtracting 15:", get())
+	add(40)
+	println("After adding 40:", get())
+
+	println("\n=== Higher-Order Functions ===")
+
+	// Create the slice
+	numbers := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	println("Original slice:", fmt.Sprint(numbers))
+
+	// Apply - square all numbers
+	squared := Apply(numbers, func(x int) int { return x * x })
+	println("Squared:", fmt.Sprint(squared))
+
+	// Filter - get even numbers
+	evens := Filter(numbers, func(x int) bool { return x%2 == 0 })
+	println("Even numbers:", fmt.Sprint(evens))
+
+	// Filter - get numbers greater than 5
+	greaterThan5 := Filter(numbers, func(x int) bool { return x > 5 })
+	println("Numbers > 5:", fmt.Sprint(greaterThan5))
+
+	// Reduce - sum all numbers
+	sum := Reduce(numbers, 0, func(acc, curr int) int { return acc + curr })
+	println("Sum of all numbers:", sum)
+
+	// Reduce - product of all numbers
+	product := Reduce(numbers, 1, func(acc, curr int) int { return acc * curr })
+	println("Product of all numbers:", product)
+
+	// Compose - create function that doubles then adds 10
+	doubleThenAdd10 := Compose(
+		func(x int) int { return x + 10 }, // add 10
+		func(x int) int { return x * 2 },  // double
+	)
+
+	testValue := 6
+	composedResult := doubleThenAdd10(testValue)
+	println("\nCompose: double then add 10")
+	println("doubleThenAdd10(", testValue, ") =", composedResult, "(expected: (6*2)+10 = 22)")
+
+	println("\n=== Pointer Demonstration ===")
+
+	// SwapValues demo
+	a, b := 5, 10
+	println("Before SwapValues: a =", a, ", b =", b)
+	newA, newB := SwapValues(a, b)
+	println("After SwapValues: a =", a, ", b =", b, "(originals unchanged)")
+	println("Returned values: newA =", newA, ", newB =", newB)
+
+	// SwapPointers demo
+	c, d := 15, 25
+	println("\nBefore SwapPointers: c =", c, ", d =", d)
+	SwapPointers(&c, &d)
+	println("After SwapPointers: c =", c, ", d =", d, "(originals modified)")
+
+	// DoubleValue vs DoublePointer demo
+	println("\nDoubleValue vs DoublePointer:")
+	x := 7
+	println("Original x =", x)
+
+	DoubleValue(x)
+	println("After DoubleValue(x): x =", x, "(unchanged - pass by value)")
+
+	DoublePointer(&x)
+	println("After DoublePointer(&x): x =", x, "(changed - pass by reference)")
+
+	// CreateOnStack vs CreateOnHeap demo
+	println("\nStack vs Heap allocation:")
+	stackVal := CreateOnStack()
+	heapPtr := CreateOnHeap()
+	println("CreateOnStack(): returns value", stackVal)
+	println("CreateOnHeap(): returns pointer, dereferenced value =", *heapPtr)
+
+	println("\n=== Program Complete ===")
 }
