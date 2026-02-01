@@ -306,3 +306,335 @@ func TestMakeAccumulator(t *testing.T) {
 		}
 	})
 }
+
+/*----- Part 3: Higher-Order Functions -----*/
+
+// 1. Apply
+func TestApply(t *testing.T) {
+	tests := []struct {
+		name      string
+		nums      []int
+		operation func(int) int
+		want      []int
+	}{
+		{
+			name:      "squaring numbers",
+			nums:      []int{1, 2, 3, 4, 5},
+			operation: func(x int) int { return x * x },
+			want:      []int{1, 4, 9, 16, 25},
+		},
+		{
+			name:      "doubling numbers",
+			nums:      []int{0, 1, 2, 3, 4},
+			operation: func(x int) int { return x * 2 },
+			want:      []int{0, 2, 4, 6, 8},
+		},
+		{
+			name:      "negating numbers",
+			nums:      []int{5, -5, 0, 10, -10},
+			operation: func(x int) int { return -x },
+			want:      []int{-5, 5, 0, -10, 10},
+		},
+		{
+			name:      "adding 10 to each",
+			nums:      []int{1, 2, 3},
+			operation: func(x int) int { return x + 10 },
+			want:      []int{11, 12, 13},
+		},
+		{
+			name:      "empty slice",
+			nums:      []int{},
+			operation: func(x int) int { return x * 2 },
+			want:      []int{},
+		},
+		{
+			name: "absolute value",
+			nums: []int{-3, -2, -1, 0, 1, 2, 3},
+			operation: func(x int) int {
+				if x < 0 {
+					return -x
+				}
+				return x
+			},
+			want: []int{3, 2, 1, 0, 1, 2, 3},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Apply(tt.nums, tt.operation)
+
+			// Check length
+			if len(got) != len(tt.want) {
+				t.Errorf("Apply() length = %v, want %v", len(got), len(tt.want))
+				return
+			}
+
+			// Check each element
+			for i := range got {
+				if got[i] != tt.want[i] {
+					t.Errorf("Apply()[%d] = %v, want %v", i, got[i], tt.want[i])
+				}
+			}
+
+			// Verify original slice is not modified
+			if len(tt.nums) > 0 {
+				originalCopy := make([]int, len(tt.nums))
+				copy(originalCopy, tt.nums)
+				Apply(tt.nums, tt.operation)
+				for i := range tt.nums {
+					if tt.nums[i] != originalCopy[i] {
+						t.Errorf("Apply() modified original slice at index %d", i)
+					}
+				}
+			}
+		})
+	}
+}
+
+// 2. Filter
+func TestFilter(t *testing.T) {
+	tests := []struct {
+		name      string
+		nums      []int
+		predicate func(int) bool
+		want      []int
+	}{
+		{
+			name:      "even numbers",
+			nums:      []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+			predicate: func(x int) bool { return x%2 == 0 },
+			want:      []int{2, 4, 6, 8, 10},
+		},
+		{
+			name:      "positive numbers",
+			nums:      []int{-5, -3, -1, 0, 1, 3, 5},
+			predicate: func(x int) bool { return x > 0 },
+			want:      []int{1, 3, 5},
+		},
+		{
+			name:      "numbers greater than 10",
+			nums:      []int{5, 10, 15, 20, 25, 30},
+			predicate: func(x int) bool { return x > 10 },
+			want:      []int{15, 20, 25, 30},
+		},
+		{
+			name:      "negative numbers",
+			nums:      []int{-10, -5, 0, 5, 10},
+			predicate: func(x int) bool { return x < 0 },
+			want:      []int{-10, -5},
+		},
+		{
+			name:      "divisible by 3",
+			nums:      []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+			predicate: func(x int) bool { return x%3 == 0 },
+			want:      []int{3, 6, 9},
+		},
+		{
+			name:      "empty slice",
+			nums:      []int{},
+			predicate: func(x int) bool { return x > 0 },
+			want:      []int{},
+		},
+		{
+			name:      "no matches",
+			nums:      []int{1, 2, 3, 4, 5},
+			predicate: func(x int) bool { return x > 10 },
+			want:      []int{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Filter(tt.nums, tt.predicate)
+
+			// Check length
+			if len(got) != len(tt.want) {
+				t.Errorf("Filter() length = %v, want %v", len(got), len(tt.want))
+				return
+			}
+
+			// Check each element
+			for i := range got {
+				if got[i] != tt.want[i] {
+					t.Errorf("Filter()[%d] = %v, want %v", i, got[i], tt.want[i])
+				}
+			}
+		})
+	}
+}
+
+// 3. Reduce
+func TestReduce(t *testing.T) {
+	tests := []struct {
+		name      string
+		nums      []int
+		initial   int
+		operation func(accumulator, current int) int
+		want      int
+	}{
+		{
+			name:      "sum of numbers",
+			nums:      []int{1, 2, 3, 4, 5},
+			initial:   0,
+			operation: func(acc, curr int) int { return acc + curr },
+			want:      15,
+		},
+		{
+			name:      "product of numbers",
+			nums:      []int{1, 2, 3, 4},
+			initial:   1,
+			operation: func(acc, curr int) int { return acc * curr },
+			want:      24,
+		},
+		{
+			name:    "find maximum",
+			nums:    []int{5, 2, 9, 1, 7},
+			initial: -1000000, // Very small initial value
+			operation: func(acc, curr int) int {
+				if curr > acc {
+					return curr
+				}
+				return acc
+			},
+			want: 9,
+		},
+		{
+			name:    "find minimum",
+			nums:    []int{5, 2, 9, 1, 7},
+			initial: 1000000, // Very large initial value
+			operation: func(acc, curr int) int {
+				if curr < acc {
+					return curr
+				}
+				return acc
+			},
+			want: 1,
+		},
+		{
+			name:    "concatenate as string length",
+			nums:    []int{1, 23, 456},
+			initial: 0,
+			operation: func(acc, curr int) int {
+				// Count digits (simplified)
+				count := 0
+				n := curr
+				if n == 0 {
+					return acc + 1
+				}
+				if n < 0 {
+					n = -n
+				}
+				for n > 0 {
+					count++
+					n /= 10
+				}
+				return acc + count
+			},
+			want: 6, // 1 + 2 + 3 digits
+		},
+		{
+			name:      "empty slice returns initial",
+			nums:      []int{},
+			initial:   42,
+			operation: func(acc, curr int) int { return acc + curr },
+			want:      42,
+		},
+		{
+			name:    "count even numbers",
+			nums:    []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+			initial: 0,
+			operation: func(acc, curr int) int {
+				if curr%2 == 0 {
+					return acc + 1
+				}
+				return acc
+			},
+			want: 5,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Reduce(tt.nums, tt.initial, tt.operation)
+			if got != tt.want {
+				t.Errorf("Reduce() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// 4. Compose
+func TestCompose(t *testing.T) {
+	tests := []struct {
+		name string
+		f    func(int) int
+		g    func(int) int
+		x    int
+		want int
+	}{
+		{
+			name: "double then add 10",
+			f:    func(x int) int { return x + 10 },
+			g:    func(x int) int { return x * 2 },
+			x:    5,
+			want: 20, // (5*2) + 10 = 20
+		},
+		{
+			name: "add 5 then square",
+			f:    func(x int) int { return x * x },
+			g:    func(x int) int { return x + 5 },
+			x:    3,
+			want: 64, // (3+5)² = 64
+		},
+		{
+			name: "negate then absolute (custom)",
+			f: func(x int) int {
+				if x < 0 {
+					return -x
+				}
+				return x
+			},
+			g:    func(x int) int { return -x },
+			x:    7,
+			want: 7, // -7 then absolute = 7
+		},
+		{
+			name: "identity functions",
+			f:    func(x int) int { return x },
+			g:    func(x int) int { return x },
+			x:    42,
+			want: 42,
+		},
+		{
+			name: "multiple negations",
+			f:    func(x int) int { return -x },
+			g:    func(x int) int { return -x },
+			x:    10,
+			want: 10, // -(-10) = 10
+		},
+		{
+			name: "zero handling",
+			f:    func(x int) int { return x + 100 },
+			g:    func(x int) int { return x * 0 },
+			x:    5,
+			want: 100, // 5*0 = 0, then 0+100 = 100
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			composed := Compose(tt.f, tt.g)
+			got := composed(tt.x)
+			if got != tt.want {
+				t.Errorf("Compose(f,g)(%d) = %v, want %v", tt.x, got, tt.want)
+			}
+
+			// Verify composition works as f(g(x))
+			manualResult := tt.f(tt.g(tt.x))
+			if got != manualResult {
+				t.Errorf("Compose(f,g)(%d) = %v, but f(g(%d)) = %v", tt.x, got, tt.x, manualResult)
+			}
+		})
+	}
+}
