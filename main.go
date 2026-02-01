@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"math"
+	"os"
 )
 
 /*----- Part 1: Table-Driven Tests & Math Operations -----*/
@@ -131,4 +132,48 @@ func Compose(f func(int) int, g func(int) int) func(int) int {
 	return func(x int) int {
 		return f(g(x))
 	}
+}
+
+/*----- Part 4: Process Explorer -----*/
+
+// ExploreProcess demonstrates process information and memory addresses
+func ExploreProcess() {
+	// Get current process
+	pid := os.Getpid()
+	ppid := os.Getppid()
+
+	// Create a slice of integers
+	data := []int{1, 2, 3, 4, 5}
+
+	// Get memory addresses
+	// &data gets the address of the slice header
+	// &data[0] gets the address of the first element in the underlying array
+	sliceAddr := &data
+	firstElemAddr := &data[0]
+
+	// Print process information
+	println("=== Process Information ===")
+	println("Current Process ID:", pid)
+	println("Parent Process ID:", ppid)
+	println("Memory address of slice:", sliceAddr)
+	println("Memory address of first element:", firstElemAddr)
+	println("Note: Other processes cannot access these memory addresses due to process isolation")
+
+	/*
+		Include comments explaining:
+
+		1. What a process ID is
+			A Process ID is basically a unique number assigned by the operating system to identify a running process.
+
+		2. Why process isolation is important
+			Process isolation is important because it prevents one process from accessing or interfering with the memory of another process.
+
+		3. The difference between the slice header address and element addresses
+			The slice header address is where Go stores metadata about the slice (for example: length, capacity, pointer to underlying array), while the element address points to the actual data in memory.
+	*/
+}
+
+func main() {
+	// Call the Part 4 function
+	ExploreProcess()
 }
