@@ -321,7 +321,6 @@ func TryAll(operations []func() error) []error {
 
 func main() {
 	// Call the Part 4 function
-	println("=== Process Information ===")
 	ExploreProcess()
 
 	/*----- Part 6: Integration - Main Program -----*/
